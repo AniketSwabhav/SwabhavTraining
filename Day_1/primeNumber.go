@@ -18,9 +18,9 @@ func main() {
 	}
 }
 
-func isPrime(n int) bool {
-	for i := 2; i*i <= n; i++ {
-		if n%i == 0 {
+func isPrime(number int) bool {
+	for i := 2; i*i <= number; i++ {
+		if number%i == 0 {
 			return false
 		}
 	}
