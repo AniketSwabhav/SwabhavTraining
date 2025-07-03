@@ -239,6 +239,17 @@ func (U *User) ValidateContactId(contactId int) bool {
 	return true
 }
 
+func (u *User) GetAllUserContacts() []contact.Contact {
+	if !u.CheckForisAdminAndIsActiveForContact() {
+		return nil
+	}
+	copyOfUserContacts := []contact.Contact{}
+	for _, userContact := range u.Contacts {
+		copyOfUserContacts = append(copyOfUserContacts, *userContact)
+	}
+	return copyOfUserContacts
+}
+
 func (u *User) GetAllContactsOfAllUsers() []*contact.Contact {
 	if !u.CheckForisAdminAndIsActiveForContact() {
 		return nil
@@ -316,6 +327,23 @@ func (u *User) GetContactDetailsById(contactId, contactDetailId int) *contact_de
 	resultContactDetail := targetContact.GetContactDetailById(contactDetailId)
 	return resultContactDetail
 }
+
+// func (u *User) GetAllContactDeatailsOfUser() []contact_detail.ContactDetail {
+// 	if !u.CheckForisAdminAndIsActiveForContact() {
+// 		return nil
+// 	}
+
+// 	var allContactDetails []contact_detail.ContactDetail
+
+// 	for i := 1; i < len(u.Contacts); i++ {
+// 		targetContact := u.GetContactById(i)
+// 		for i := 1; i < len(targetContact.ContactDetails); i++ {
+// 			targetContactDetails := targetContact.GetContactDetailById(i)
+// 			allContactDetails = append(allContactDetails, *targetContactDetails)
+// 		}
+// 	}
+// 	return allContactDetails
+// }
 
 func (u *User) GetAllContactDetailsOfAllUsers() []contact_detail.ContactDetail {
 	if !u.CheckForisAdminAndIsActiveForContact() {
