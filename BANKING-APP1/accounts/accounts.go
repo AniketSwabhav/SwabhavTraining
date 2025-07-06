@@ -163,6 +163,23 @@ func (acc *Accounts) Deposit(amount float32) error {
 	return nil
 }
 
-func (acc *Accounts) GetPassbook() []PassbookEntry {
-	return acc.Passbook
+func (acc *Accounts) GetPassbook(page, pageSize int) ([]PassbookEntry, error) {
+
+	if page <= 0 || pageSize <= 0 {
+		return nil, errors.New("page and pageSize must be positive integers")
+	}
+
+	start := (page - 1) * pageSize
+
+	if start >= len(acc.Passbook) {
+		return []PassbookEntry{}, nil // empty slice if out of range
+	}
+
+	end := start + pageSize
+	if end > len(acc.Passbook) {
+		end = len(acc.Passbook)
+	}
+
+	return acc.Passbook[start:end], nil
+
 }

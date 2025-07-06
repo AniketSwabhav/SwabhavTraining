@@ -65,7 +65,7 @@ func main() {
 	customer.WithdrawFromAccount(101, 200)
 	// fmt.Println(customer.GetMyAccountBlance(101))
 
-	entries, err := customer.ViewMyPassbook(101)
+	entries, err := customer.ViewMyPassbook(101, 1, 5)
 	if err != nil {
 		fmt.Println("Error:", err)
 	} else {
@@ -77,7 +77,7 @@ func main() {
 
 	fmt.Println("=====================================================================================================")
 
-	entries2, err := admin.ViewAccountSpecificPassbook(102)
+	entries2, err := admin.ViewAccountSpecificPassbook(102, 1, 5)
 	if err != nil {
 		fmt.Println("Error:", err)
 	} else {

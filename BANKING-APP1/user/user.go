@@ -348,9 +348,9 @@ func (u *User) DepositToAccount(accountNo int, amount float32) error {
 	return errors.New("account not found for this user")
 }
 
-// ====================================================================== Passbook entries ===================================================================
+// ====================================================================== Passbook entries with pagination ===================================================================
 
-func (u *User) ViewMyPassbook(accountNo int) ([]accounts.PassbookEntry, error) {
+func (u *User) ViewMyPassbook(accountNo, page, pageSize int) ([]accounts.PassbookEntry, error) {
 	if u.IsAdmin {
 		return nil, errors.New("admin cannot view passbook as customer")
 	}
@@ -360,10 +360,10 @@ func (u *User) ViewMyPassbook(accountNo int) ([]accounts.PassbookEntry, error) {
 		return nil, fmt.Errorf("failed to retrieve account: %v", err)
 	}
 
-	return acc.GetPassbook(), nil
+	return acc.GetPassbook(page, pageSize)
 }
 
-func (u *User) ViewAccountSpecificPassbook(accountNo int) ([]accounts.PassbookEntry, error) {
+func (u *User) ViewAccountSpecificPassbook(accountNo int, page, pageSize int) ([]accounts.PassbookEntry, error) {
 	if !u.IsAdmin {
 		return nil, errors.New("only admin can view other users' passbooks")
 	}
@@ -373,5 +373,5 @@ func (u *User) ViewAccountSpecificPassbook(accountNo int) ([]accounts.PassbookEn
 		return nil, fmt.Errorf("account retrieval failed: %v", err)
 	}
 
-	return targetAcc.GetPassbook(), nil
+	return targetAcc.GetPassbook(page, pageSize)
 }
