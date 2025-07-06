@@ -236,7 +236,7 @@ func (u *User) CreateAccount(bankId int) error {
 
 func (u *User) CalculateTotalBalance() (float32, error) {
 	if u.IsAdmin {
-		return 0, errors.New("only valid customer see Total Balance")
+		return 0, errors.New("only customers can see Total Balance")
 	}
 	total := float32(0)
 	for _, acc := range u.Accounts {
@@ -248,17 +248,17 @@ func (u *User) CalculateTotalBalance() (float32, error) {
 
 func (u *User) GetMyAccountBlance(accountNo int) (float32, error) {
 	if u.IsAdmin {
-		return 0, errors.New("only valid customer see account balance")
+		return 0, errors.New("only valid customer can see account balance")
 	}
 	for i := range u.Accounts {
 		if u.Accounts[i].AccountNo == accountNo {
 			return u.Accounts[i].Balance, nil
 		}
 	}
-	return 0, errors.New("account not found")
+	return 0, errors.New("provided account number is not related to requesting user")
 }
 
-func (u *User) GetSenderAccountById(accountNo int) (*accounts.Accounts, error) {
+func (u *User) GetSelfAccountById(accountNo int) (*accounts.Accounts, error) {
 	if u.IsAdmin {
 		return nil, nil
 	}
@@ -268,7 +268,7 @@ func (u *User) GetSenderAccountById(accountNo int) (*accounts.Accounts, error) {
 			return u.Accounts[i], nil
 		}
 	}
-	return nil, errors.New("account not found for this user")
+	return nil, fmt.Errorf("account %d not found for user %s %s", accountNo, u.FirstName, u.LastName)
 }
 
 func (u *User) TransferBetweenSelfAccounts(fromAccNo, toAccNo int, amount float32) error {
@@ -276,15 +276,26 @@ func (u *User) TransferBetweenSelfAccounts(fromAccNo, toAccNo int, amount float3
 		return errors.New("admin cannot perform transfers")
 	}
 
-	fromAcc, err := u.GetSenderAccountById(fromAccNo)
+	fromAcc, err := u.GetSelfAccountById(fromAccNo)
 	if err != nil {
-		return err
+		return fmt.Errorf("source account retrieval failed: %v", err)
 	}
 
-	if fromAcc == nil {
-		return errors.New("source account not found")
+	toAcc, err := u.GetSelfAccountById(toAccNo)
+	if err != nil {
+		return fmt.Errorf("target account retrieval failed: %v", err)
 	}
-	return fromAcc.Transfer(amount, toAccNo)
+
+	if fromAcc.AccountNo == toAcc.AccountNo {
+		return errors.New("cannot transfer to the same account")
+	}
+
+	if err := fromAcc.SelfTransfer(amount, toAcc); err != nil {
+		return fmt.Errorf("transfer between accounts failed: %v", err)
+	}
+
+	fmt.Printf("Successfully transferred Rs.%.2f from Acc#%d to Acc#%d\n", amount, fromAccNo, toAccNo)
+	return nil
 }
 
 func (u *User) TransferToOtherUser(fromAccNo, targetAccNo int, amount float32) error {
@@ -292,15 +303,21 @@ func (u *User) TransferToOtherUser(fromAccNo, targetAccNo int, amount float32) e
 		return errors.New("admin cannot perform transfers")
 	}
 
-	fromAcc, err := u.GetSenderAccountById(fromAccNo)
+	fromAcc, err := u.GetSelfAccountById(fromAccNo)
 	if err != nil {
-		return err
+		return fmt.Errorf("source account retrieval failed: %v", err)
 	}
 
 	if fromAcc == nil {
-		return errors.New("source account not found")
+		return fmt.Errorf("source account %d not found for user %s %s", fromAccNo, u.FirstName, u.LastName)
 	}
-	return fromAcc.Transfer(amount, targetAccNo)
+
+	if err := fromAcc.BankTransfer(amount, targetAccNo); err != nil {
+		return fmt.Errorf("transfer to other user failed: %v", err)
+	}
+
+	fmt.Printf("Successfully transferred Rs.%.2f from your Acc#%d to target Acc#%d\n", amount, fromAccNo, targetAccNo)
+	return nil
 }
 
 func (u *User) WithdrawFromAccount(accountNo int, amount float32) error {
@@ -329,4 +346,32 @@ func (u *User) DepositToAccount(accountNo int, amount float32) error {
 	}
 
 	return errors.New("account not found for this user")
+}
+
+// ====================================================================== Passbook entries ===================================================================
+
+func (u *User) ViewMyPassbook(accountNo int) ([]accounts.PassbookEntry, error) {
+	if u.IsAdmin {
+		return nil, errors.New("admin cannot view passbook as customer")
+	}
+
+	acc, err := u.GetSelfAccountById(accountNo)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account: %v", err)
+	}
+
+	return acc.GetPassbook(), nil
+}
+
+func (u *User) ViewAccountSpecificPassbook(accountNo int) ([]accounts.PassbookEntry, error) {
+	if !u.IsAdmin {
+		return nil, errors.New("only admin can view other users' passbooks")
+	}
+
+	targetAcc, err := accounts.GetReceiverAccountById(accountNo)
+	if err != nil {
+		return nil, fmt.Errorf("account retrieval failed: %v", err)
+	}
+
+	return targetAcc.GetPassbook(), nil
 }
