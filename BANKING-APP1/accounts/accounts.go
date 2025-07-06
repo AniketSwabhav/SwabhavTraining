@@ -2,6 +2,7 @@ package accounts
 
 import (
 	"errors"
+	"fmt"
 )
 
 var accountNo int = 100
@@ -56,5 +57,26 @@ func (acc *Accounts) Transfer(amount float32, targetAccNo int) error {
 
 	acc.Balance -= amount
 	targetAcc.Balance += amount
+	return nil
+}
+
+func (acc *Accounts) Withdraw(amount float32) error {
+	if amount <= 0 {
+		return errors.New("withdrawal amount must be positive")
+	}
+	if acc.Balance < amount {
+		return errors.New("insufficient balance for withdrawal")
+	}
+	acc.Balance -= amount
+	acc.Passbook = append(acc.Passbook, fmt.Sprintf("Withdrawn Rs.%.2f | New Balance: Rs.%.2f", amount, acc.Balance))
+	return nil
+}
+
+func (acc *Accounts) Deposit(amount float32) error {
+	if amount <= 0 {
+		return errors.New("deposit amount must be positive")
+	}
+	acc.Balance += amount
+	acc.Passbook = append(acc.Passbook, fmt.Sprintf("Deposited Rs.%.2f | New Balance: Rs.%.2f", amount, acc.Balance))
 	return nil
 }

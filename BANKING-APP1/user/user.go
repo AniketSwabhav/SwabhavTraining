@@ -302,3 +302,31 @@ func (u *User) TransferToOtherUser(fromAccNo, targetAccNo int, amount float32) e
 	}
 	return fromAcc.Transfer(amount, targetAccNo)
 }
+
+func (u *User) WithdrawFromAccount(accountNo int, amount float32) error {
+	if u.IsAdmin {
+		return errors.New("admin cannot perform withdrawals")
+	}
+
+	for _, acc := range u.Accounts {
+		if acc.AccountNo == accountNo {
+			return acc.Withdraw(amount)
+		}
+	}
+
+	return errors.New("account not found for this user")
+}
+
+func (u *User) DepositToAccount(accountNo int, amount float32) error {
+	if u.IsAdmin {
+		return errors.New("admin cannot perform deposits")
+	}
+
+	for _, acc := range u.Accounts {
+		if acc.AccountNo == accountNo {
+			return acc.Deposit(amount)
+		}
+	}
+
+	return errors.New("account not found for this user")
+}

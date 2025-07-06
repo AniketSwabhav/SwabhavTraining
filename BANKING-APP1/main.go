@@ -43,5 +43,11 @@ func main() {
 	fmt.Println(customer.CalculateTotalBalance())
 	fmt.Println(customer2.CalculateTotalBalance())
 
-	fmt.Println(customer.GetMyAccountBlance(103))
+	fmt.Println(customer.GetMyAccountBlance(101))
+
+	customer.DepositToAccount(101, 500)
+	fmt.Println(customer.GetMyAccountBlance(101))
+
+	customer.WithdrawFromAccount(101, 200)
+	fmt.Println(customer.GetMyAccountBlance(101))
 }
