@@ -34,7 +34,7 @@ func NewUser(firstName, lastName string, isAdmin bool) (*User, error) {
 		UserID:    userId,
 		FirstName: firstName,
 		LastName:  lastName,
-		IsAdmin:   isAdmin,
+		IsAdmin:   true,
 	}
 
 	userMap[userId] = user
@@ -42,9 +42,9 @@ func NewUser(firstName, lastName string, isAdmin bool) (*User, error) {
 	return user, nil
 }
 
-func NewAdmin(firstName, lastName string, isAdmin bool) (*User, error) {
+func NewAdmin(firstName, lastName string) (*User, error) {
 
-	newAdmin, err := NewUser(firstName, lastName, isAdmin)
+	newAdmin, err := NewUser(firstName, lastName, true)
 	if err != nil {
 		return nil, err
 	}
@@ -124,11 +124,12 @@ func (u *User) DeleteBankById(bankId int) error {
 
 // =====================================================================Customer Related Methods========================================================================
 
-func (u *User) NewCustomer(firstName, lastName string, isAdmin bool) (*User, error) {
+func (u *User) NewCustomer(firstName, lastName string) (*User, error) {
 	if !u.IsAdmin {
 		return nil, errors.New("only admin can add customers")
 	}
-	newCustomer, err := NewUser(firstName, lastName, isAdmin)
+	// createdStaff = NewUser(fName, lName, false)
+	newCustomer, err := NewUser(firstName, lastName, false)
 	if err != nil {
 		return nil, err
 	}

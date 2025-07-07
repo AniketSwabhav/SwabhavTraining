@@ -7,11 +7,11 @@ import (
 
 func main() {
 
-	admin, _ := user.NewAdmin("Super", "Admin", true)
-	customer, _ := admin.NewCustomer("Aniket", "Pardeshi", false)
+	admin, _ := user.NewAdmin("Super", "Admin")
+	customer, _ := admin.NewCustomer("Aniket", "Pardeshi")
 	fmt.Println(*customer)
 
-	customer2, err := admin.NewCustomer("ankush", "Sondal", false)
+	customer2, err := admin.NewCustomer("ankush", "Sondal")
 	if err != nil {
 		fmt.Println(err)
 		return
