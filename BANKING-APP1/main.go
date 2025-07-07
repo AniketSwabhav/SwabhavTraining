@@ -9,13 +9,10 @@ func main() {
 
 	admin, _ := user.NewAdmin("Super", "Admin")
 	customer, _ := admin.NewCustomer("Aniket", "Pardeshi")
+	fmt.Println(*admin)
 	fmt.Println(*customer)
 
-	customer2, err := admin.NewCustomer("ankush", "Sondal")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	customer2, _ := admin.NewCustomer("ankush", "Sondal")
 	fmt.Println(*customer2)
 
 	bank1, err := admin.AddBank("Bank of Baroda")
@@ -46,7 +43,7 @@ func main() {
 
 	customer.TransferToOtherUser(101, 104, 300)
 	customer.TransferToOtherUser(102, 104, 200)
-	customer.TransferToOtherUser(104, 101, 250)
+	customer2.TransferToOtherUser(104, 101, 250)
 
 	// fmt.Println(customer.CalculateTotalBalance())
 	// fmt.Println(customer2.CalculateTotalBalance())
@@ -54,9 +51,14 @@ func main() {
 	// fmt.Println(customer.GetMyAccountBlance(101))
 
 	customer.DepositToAccount(101, 500)
+
+	// fmt.Println(customer.GetMyAccountBlance(101))
+
 	customer.DepositToAccount(101, 600)
 	customer.DepositToAccount(101, 10)
 	customer.WithdrawFromAccount(101, 400)
+	// fmt.Println(customer.GetMyAccountBlance(101))
+
 	customer.DepositToAccount(101, 450)
 	customer.WithdrawFromAccount(101, 300)
 

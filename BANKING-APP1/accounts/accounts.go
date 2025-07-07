@@ -1,6 +1,7 @@
 package accounts
 
 import (
+	"banking_app/passbook"
 	"errors"
 	"fmt"
 	"time"
@@ -14,15 +15,7 @@ type Accounts struct {
 	Balance   float32
 	BankId    int
 	UserID    int
-	Passbook  []PassbookEntry
-}
-
-type PassbookEntry struct {
-	Timestamp time.Time
-	Type      string
-	Amount    float32
-	Balance   float32
-	Note      string
+	Passbook  []passbook.Transaction
 }
 
 func NewAccount(bankId int, userId int) (*Accounts, error) {
@@ -37,7 +30,7 @@ func NewAccount(bankId int, userId int) (*Accounts, error) {
 		Balance:   1000,
 		BankId:    bankId,
 		UserID:    userId,
-		Passbook: []PassbookEntry{
+		Passbook: []passbook.Transaction{
 			{
 				Timestamp: time.Now(),
 				Type:      "AccountCreation",
@@ -70,21 +63,11 @@ func (acc *Accounts) SelfTransfer(amount float32, toacc *Accounts) error {
 	acc.Balance -= amount
 	toacc.Balance += amount
 
-	acc.Passbook = append(acc.Passbook, PassbookEntry{
-		Timestamp: time.Now(),
-		Type:      "SelfTransferDebit",
-		Amount:    amount,
-		Balance:   acc.Balance,
-		Note:      fmt.Sprintf("Transferred Rs.%.2f to Account #%d", amount, toacc.AccountNo),
-	})
+	debitTransaction := passbook.NewTransaction("SelfTransferDebit", amount, acc.Balance, fmt.Sprintf("Transferred Rs.%.2f to Account #%d", amount, toacc.AccountNo))
+	acc.Passbook = append(acc.Passbook, debitTransaction)
 
-	toacc.Passbook = append(toacc.Passbook, PassbookEntry{
-		Timestamp: time.Now(),
-		Type:      "SelfTransferCredit",
-		Amount:    amount,
-		Balance:   toacc.Balance,
-		Note:      fmt.Sprintf("Received Rs.%.2f from Account #%d", amount, acc.AccountNo),
-	})
+	creditTransaction := passbook.NewTransaction("SelfTransferCredit", amount, toacc.Balance, fmt.Sprintf("Received Rs.%.2f from Account #%d", amount, acc.AccountNo))
+	toacc.Passbook = append(toacc.Passbook, creditTransaction)
 
 	return nil
 }
@@ -107,21 +90,11 @@ func (acc *Accounts) BankTransfer(amount float32, targetAccNo int) error {
 	acc.Balance -= amount
 	targetAcc.Balance += amount
 
-	acc.Passbook = append(acc.Passbook, PassbookEntry{
-		Timestamp: time.Now(),
-		Type:      "BankTransferDebit",
-		Amount:    amount,
-		Balance:   acc.Balance,
-		Note:      fmt.Sprintf("Transferred Rs.%.2f to Account #%d", amount, targetAccNo),
-	})
+	debitTransaction := passbook.NewTransaction("BankTransferDebit", amount, acc.Balance, fmt.Sprintf("Transferred Rs.%.2f to Account #%d", amount, targetAccNo))
+	acc.Passbook = append(acc.Passbook, debitTransaction)
 
-	targetAcc.Passbook = append(targetAcc.Passbook, PassbookEntry{
-		Timestamp: time.Now(),
-		Type:      "BankTransferCredit",
-		Amount:    amount,
-		Balance:   targetAcc.Balance,
-		Note:      fmt.Sprintf("Received Rs.%.2f from Account #%d", amount, acc.AccountNo),
-	})
+	creditTransaction := passbook.NewTransaction("BankTransferCredit", amount, targetAcc.Balance, fmt.Sprintf("Received Rs.%.2f from Account #%d", amount, acc.AccountNo))
+	targetAcc.Passbook = append(targetAcc.Passbook, creditTransaction)
 
 	return nil
 }
@@ -135,13 +108,8 @@ func (acc *Accounts) Withdraw(amount float32) error {
 	}
 	acc.Balance -= amount
 
-	acc.Passbook = append(acc.Passbook, PassbookEntry{
-		Timestamp: time.Now(),
-		Type:      "Withdrawal",
-		Amount:    amount,
-		Balance:   acc.Balance,
-		Note:      fmt.Sprintf("Withdrawn Rs.%.2f", amount),
-	})
+	withdrawTransaction := passbook.NewTransaction("Withdrawal", amount, acc.Balance, fmt.Sprintf("Withdrawn Rs.%.2f", amount))
+	acc.Passbook = append(acc.Passbook, withdrawTransaction)
 
 	return nil
 }
@@ -150,20 +118,16 @@ func (acc *Accounts) Deposit(amount float32) error {
 	if amount <= 0 {
 		return errors.New("deposit amount must be positive")
 	}
+
 	acc.Balance += amount
 
-	acc.Passbook = append(acc.Passbook, PassbookEntry{
-		Timestamp: time.Now(),
-		Type:      "Deposit",
-		Amount:    amount,
-		Balance:   acc.Balance,
-		Note:      fmt.Sprintf("Deposited Rs.%.2f", amount),
-	})
+	depositTransaction := passbook.NewTransaction("Deposite", amount, acc.Balance, fmt.Sprintf("Deposited Rs.%.2f", amount))
+	acc.Passbook = append(acc.Passbook, depositTransaction)
 
 	return nil
 }
 
-func (acc *Accounts) GetPassbook(page, pageSize int) ([]PassbookEntry, error) {
+func (acc *Accounts) GetPassbook(page, pageSize int) ([]passbook.Transaction, error) {
 
 	if page <= 0 || pageSize <= 0 {
 		return nil, errors.New("page and pageSize must be positive integers")
@@ -172,7 +136,7 @@ func (acc *Accounts) GetPassbook(page, pageSize int) ([]PassbookEntry, error) {
 	start := (page - 1) * pageSize
 
 	if start >= len(acc.Passbook) {
-		return []PassbookEntry{}, nil // empty slice if out of range
+		return []passbook.Transaction{}, nil
 	}
 
 	end := start + pageSize

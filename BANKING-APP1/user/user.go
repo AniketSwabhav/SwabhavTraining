@@ -3,6 +3,7 @@ package user
 import (
 	"banking_app/accounts"
 	"banking_app/bank"
+	"banking_app/passbook"
 	"errors"
 	"fmt"
 )
@@ -34,7 +35,7 @@ func NewUser(firstName, lastName string, isAdmin bool) (*User, error) {
 		UserID:    userId,
 		FirstName: firstName,
 		LastName:  lastName,
-		IsAdmin:   true,
+		IsAdmin:   isAdmin,
 	}
 
 	userMap[userId] = user
@@ -128,7 +129,6 @@ func (u *User) NewCustomer(firstName, lastName string) (*User, error) {
 	if !u.IsAdmin {
 		return nil, errors.New("only admin can add customers")
 	}
-	// createdStaff = NewUser(fName, lName, false)
 	newCustomer, err := NewUser(firstName, lastName, false)
 	if err != nil {
 		return nil, err
@@ -351,7 +351,7 @@ func (u *User) DepositToAccount(accountNo int, amount float32) error {
 
 // ====================================================================== Passbook entries with pagination ===================================================================
 
-func (u *User) ViewMyPassbook(accountNo, page, pageSize int) ([]accounts.PassbookEntry, error) {
+func (u *User) ViewMyPassbook(accountNo, page, pageSize int) ([]passbook.Transaction, error) {
 	if u.IsAdmin {
 		return nil, errors.New("admin cannot view passbook as customer")
 	}
@@ -364,7 +364,7 @@ func (u *User) ViewMyPassbook(accountNo, page, pageSize int) ([]accounts.Passboo
 	return acc.GetPassbook(page, pageSize)
 }
 
-func (u *User) ViewAccountSpecificPassbook(accountNo int, page, pageSize int) ([]accounts.PassbookEntry, error) {
+func (u *User) ViewAccountSpecificPassbook(accountNo int, page, pageSize int) ([]passbook.Transaction, error) {
 	if !u.IsAdmin {
 		return nil, errors.New("only admin can view other users' passbooks")
 	}
