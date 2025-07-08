@@ -15,6 +15,9 @@ func main() {
 	customer2, _ := admin.NewCustomer("ankush", "Sondal")
 	fmt.Println(*customer2)
 
+	customer3, _ := admin.NewCustomer("Brijesh", "Mavani")
+	fmt.Println(*customer3)
+
 	bank1, err := admin.AddBank("Bank of Baroda")
 	if err != nil {
 		fmt.Println(err)
@@ -28,10 +31,18 @@ func main() {
 	}
 	fmt.Println(*bank2)
 
+	bank3, err := admin.AddBank("Punjab National Bank")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(*bank3)
+
 	customer.CreateAccount(1)
 	customer.CreateAccount(1)
 	customer.CreateAccount(1)
 	customer2.CreateAccount(2)
+	customer3.CreateAccount(3)
 
 	customer.TransferBetweenSelfAccounts(101, 103, 300)
 	customer.TransferBetweenSelfAccounts(102, 103, 450)
@@ -44,6 +55,7 @@ func main() {
 	customer.TransferToOtherUser(101, 104, 300)
 	customer.TransferToOtherUser(102, 104, 200)
 	customer2.TransferToOtherUser(104, 101, 250)
+	customer.TransferToOtherUser(101, 105, 379)
 
 	// fmt.Println(customer.CalculateTotalBalance())
 	// fmt.Println(customer2.CalculateTotalBalance())
@@ -88,4 +100,14 @@ func main() {
 				entry.Timestamp.Format("2006-01-02 15:04:05"), entry.Type, entry.Amount, entry.Balance, entry.Note)
 		}
 	}
+
+	fmt.Println("=====================================================================================================")
+
+	// fmt.Println(admin.GetBankById(1))
+	// fmt.Println(admin.GetBankById(2))
+	amount, err := admin.GetBankTransactionAmount(3, 1)
+	if err != nil {
+		return
+	}
+	fmt.Println(amount)
 }

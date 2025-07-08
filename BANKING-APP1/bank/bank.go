@@ -2,6 +2,7 @@ package bank
 
 import (
 	"banking_app/accounts"
+	"banking_app/ledger"
 	"errors"
 	"fmt"
 	"strings"
@@ -11,10 +12,11 @@ var bankId = 0
 var allBanks = make(map[int]*Bank)
 
 type Bank struct {
-	BankID       int
-	FullName     string
-	Abbreviation string
-	Accounts     []accounts.Accounts
+	BankID           int
+	FullName         string
+	Abbreviation     string
+	Accounts         []accounts.Accounts
+	BankTransactions []ledger.BankTransaction
 }
 
 func NewBank(fullName string) (*Bank, error) {
@@ -91,6 +93,32 @@ func DeleteBank(bankId int) error {
 	return nil
 }
 
-func GetAccount(accountNo int) {
+func (b *Bank) CreateNewBankTransaction(senderBankID int, recieverBankID int, amount float32) (*ledger.BankTransaction, error) {
 
+	newBankTransaction, err := ledger.NewBankTransaction(senderBankID, recieverBankID, amount)
+	if err != nil {
+		return nil, err
+	}
+
+	b.BankTransactions = append(b.BankTransactions, *newBankTransaction)
+	return newBankTransaction, nil
+}
+
+func (b *Bank) GetBankTransactionAmount(bankID int) (float32, error) {
+
+	if bankID < 0 {
+		return -1, errors.New("bank ID cannot be negative")
+	}
+
+	var totalAmount float32 = 0.0
+
+	for _, transactions := range b.BankTransactions {
+		if (transactions.SenderBankID == b.BankID) && (transactions.ReceiverBankID == bankID) {
+			totalAmount -= transactions.Amount
+		} else if (transactions.SenderBankID == bankID) && (transactions.ReceiverBankID == b.BankID) {
+			totalAmount += transactions.Amount
+		}
+	}
+
+	return totalAmount, nil
 }

@@ -313,6 +313,21 @@ func (u *User) TransferToOtherUser(fromAccNo, targetAccNo int, amount float32) e
 		return fmt.Errorf("source account %d not found for user %s %s", fromAccNo, u.FirstName, u.LastName)
 	}
 
+	targetAcc, err := accounts.GetReceiverAccountById(targetAccNo)
+	if err != nil {
+		return fmt.Errorf("target account retrieval failed: %v", err)
+	}
+
+	senderBankID := fromAcc.BankId
+	receiverBankID := targetAcc.BankId
+
+	senderBank, err := bank.GetBank(senderBankID)
+	if err != nil {
+		return err
+	}
+
+	senderBank.CreateNewBankTransaction(senderBankID, receiverBankID, amount)
+
 	if err := fromAcc.BankTransfer(amount, targetAccNo); err != nil {
 		return fmt.Errorf("transfer to other user failed: %v", err)
 	}
@@ -375,4 +390,23 @@ func (u *User) ViewAccountSpecificPassbook(accountNo int, page, pageSize int) ([
 	}
 
 	return targetAcc.GetPassbook(page, pageSize)
+}
+
+// =========================================================================Ledger===========================================================================================
+func (u *User) GetBankTransactionAmount(bankAId, bankBId int) (float32, error) {
+
+	if !u.IsAdmin {
+		return 0, errors.New("admin cannot view passbook as customer")
+	}
+
+	bankA, err := u.GetBankById(bankAId)
+	if err != nil {
+		return 0, errors.New("bank A not found")
+	}
+
+	amount, err := bankA.GetBankTransactionAmount(bankBId)
+	if err != nil {
+		return -1, err
+	}
+	return amount, nil
 }
