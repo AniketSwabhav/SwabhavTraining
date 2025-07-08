@@ -105,9 +105,29 @@ func main() {
 
 	// fmt.Println(admin.GetBankById(1))
 	// fmt.Println(admin.GetBankById(2))
-	amount, err := admin.GetBankTransactionAmount(3, 1)
+	amount, err := admin.GetBankTransactionAmount(1, 3)
 	if err != nil {
 		return
 	}
 	fmt.Println(amount)
+
+	allbanks, err := admin.GetAllBanks()
+	for _, bank := range allbanks {
+		fmt.Printf("Bank Id : %d\n", bank.BankID)
+		fmt.Printf("FullName: %s\n", bank.FullName)
+		fmt.Printf("Abbreviation %s\n", bank.Abbreviation)
+		fmt.Println("---------------------------------------------------------")
+	}
+
+	fmt.Println("=====================================================================================================")
+
+	users, err := admin.GetAllUsers()
+	for _, user := range users {
+		fmt.Printf("User Id : %d\n", user.UserID)
+		fmt.Printf("First Name: %s\n", user.FirstName)
+		fmt.Printf("Last Name: %s\n", user.LastName)
+		fmt.Printf("TotalBalance: %.2f\n", user.TotalBalance)
+		fmt.Println("---------------------------------------------------------")
+	}
+
 }

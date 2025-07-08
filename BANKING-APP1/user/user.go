@@ -80,6 +80,17 @@ func (u *User) GetBankById(bankId int) (*bank.Bank, error) {
 	return bank, nil
 }
 
+func (u *User) GetAllBanks() ([]bank.Bank, error) {
+	if !u.IsAdmin {
+		panic("only admins can get all banks")
+	}
+	allbank, err := bank.GetAllBanks()
+	if err != nil {
+		return nil, errors.New("someting wrong")
+	}
+	return allbank, nil
+}
+
 func (u *User) UpdateBankById(bankId int, param string, value interface{}) error {
 	if !u.IsAdmin {
 		return errors.New("only admin can add banks")
@@ -145,6 +156,17 @@ func (u *User) GetCustomerById(customerId int) (*User, error) {
 		return nil, errors.New("customer not found with the given ID")
 	}
 	return customer, nil
+}
+
+func (u *User) GetAllUsers() ([]User, error) {
+	if !u.IsAdmin {
+		return nil, errors.New("unable to get all users")
+	}
+	totalUsers := []User{}
+	for _, user := range userMap {
+		totalUsers = append(totalUsers, *user)
+	}
+	return totalUsers, nil
 }
 
 func (u *User) UpdateCustomerById(customerId int, param string, value interface{}) error {
@@ -392,7 +414,7 @@ func (u *User) ViewAccountSpecificPassbook(accountNo int, page, pageSize int) ([
 	return targetAcc.GetPassbook(page, pageSize)
 }
 
-// =========================================================================Ledger===========================================================================================
+// ===============================================================================Ledger===========================================================================================
 func (u *User) GetBankTransactionAmount(bankAId, bankBId int) (float32, error) {
 
 	if !u.IsAdmin {
@@ -410,3 +432,5 @@ func (u *User) GetBankTransactionAmount(bankAId, bankBId int) (float32, error) {
 	}
 	return amount, nil
 }
+
+//

@@ -55,6 +55,14 @@ func GetBank(bankId int) (*Bank, error) {
 	return bank, nil
 }
 
+func GetAllBanks() ([]Bank, error) {
+	totalBanks := []Bank{}
+	for _, bank := range allBanks {
+		totalBanks = append(totalBanks, *bank)
+	}
+	return totalBanks, nil
+}
+
 func (b *Bank) UpdateBank(param string, value interface{}) error {
 	if param == "" {
 		return errors.New("parameter cannot be empty")
