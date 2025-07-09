@@ -7,35 +7,22 @@ import (
 
 func main() {
 
-	admin, _ := user.NewAdmin("Super", "Admin")
-	customer, _ := admin.NewCustomer("Aniket", "Pardeshi")
+	admin := user.NewAdmin("Super", "Admin")
+	customer := admin.NewCustomer("Aniket", "Pardeshi")
 	fmt.Println(*admin)
 	fmt.Println(*customer)
 
-	customer2, _ := admin.NewCustomer("ankush", "Sondal")
+	customer2 := admin.NewCustomer("ankush", "Sondal")
 	fmt.Println(*customer2)
 
-	customer3, _ := admin.NewCustomer("Brijesh", "Mavani")
+	customer3 := admin.NewCustomer("Brijesh", "Mavani")
 	fmt.Println(*customer3)
 
-	bank1, err := admin.AddBank("Bank of Baroda")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	bank1 := admin.AddBank("Bank of Baroda")
 	fmt.Println(*bank1)
-	bank2, err := admin.AddBank("Kotak Mahindra")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	bank2 := admin.AddBank("Kotak Mahindra")
 	fmt.Println(*bank2)
-
-	bank3, err := admin.AddBank("Punjab National Bank")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	bank3 := admin.AddBank("Punjab National Bank")
 	fmt.Println(*bank3)
 
 	customer.CreateAccount(1)
@@ -79,39 +66,29 @@ func main() {
 	customer.WithdrawFromAccount(101, 200)
 	// fmt.Println(customer.GetMyAccountBlance(101))
 
-	entries, err := customer.ViewMyPassbook(101, 1, 5)
-	if err != nil {
-		fmt.Println("Error:", err)
-	} else {
-		for _, entry := range entries {
-			fmt.Printf("%s | %s | Rs.%.2f | Balance: Rs.%.2f | Note: %s\n",
-				entry.Timestamp.Format("2006-01-02 15:04:05"), entry.Type, entry.Amount, entry.Balance, entry.Note)
-		}
+	entries := customer.ViewMyPassbook(101, 1, 5)
+	for _, entry := range entries {
+		fmt.Printf("%s | %s | Rs.%.2f | Balance: Rs.%.2f | Note: %s\n",
+			entry.Timestamp.Format("2006-01-02 15:04:05"), entry.Type, entry.Amount, entry.Balance, entry.Note)
 	}
 
 	fmt.Println("=====================================================================================================")
 
-	entries2, err := admin.ViewAccountSpecificPassbook(102, 1, 5)
-	if err != nil {
-		fmt.Println("Error:", err)
-	} else {
-		for _, entry := range entries2 {
-			fmt.Printf("%s | %s | Rs.%.2f | Balance: Rs.%.2f | Note: %s\n",
-				entry.Timestamp.Format("2006-01-02 15:04:05"), entry.Type, entry.Amount, entry.Balance, entry.Note)
-		}
+	entries2 := admin.ViewAccountSpecificPassbook(102, 1, 5)
+	for _, entry := range entries2 {
+		fmt.Printf("%s | %s | Rs.%.2f | Balance: Rs.%.2f | Note: %s\n",
+			entry.Timestamp.Format("2006-01-02 15:04:05"), entry.Type, entry.Amount, entry.Balance, entry.Note)
 	}
 
 	fmt.Println("=====================================================================================================")
 
 	// fmt.Println(admin.GetBankById(1))
 	// fmt.Println(admin.GetBankById(2))
-	amount, err := admin.GetBankTransactionAmount(1, 3)
-	if err != nil {
-		return
-	}
+
+	amount := admin.GetBankTransactionAmount(1, 3)
 	fmt.Println(amount)
 
-	allbanks, err := admin.GetAllBanks()
+	allbanks := admin.GetAllBanks()
 	for _, bank := range allbanks {
 		fmt.Printf("Bank Id : %d\n", bank.BankID)
 		fmt.Printf("FullName: %s\n", bank.FullName)
@@ -121,7 +98,7 @@ func main() {
 
 	fmt.Println("=====================================================================================================")
 
-	users, err := admin.GetAllUsers()
+	users := admin.GetAllUsers()
 	for _, user := range users {
 		fmt.Printf("User Id : %d\n", user.UserID)
 		fmt.Printf("First Name: %s\n", user.FirstName)

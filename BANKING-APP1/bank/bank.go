@@ -3,6 +3,7 @@ package bank
 import (
 	"banking_app/accounts"
 	"banking_app/ledger"
+	"banking_app/util"
 	"errors"
 	"fmt"
 	"strings"
@@ -47,75 +48,87 @@ func getAbbreviation(input string) string {
 	return strings.Join(firstLetters, "")
 }
 
-func GetBank(bankId int) (*Bank, error) {
+func GetBank(bankId int) *Bank {
+
+	defer util.HandlePanic()
+
 	bank, exists := allBanks[bankId]
 	if !exists {
-		return nil, errors.New("bank not found")
+		panic("bank not found")
 	}
-	return bank, nil
+	return bank
 }
 
-func GetAllBanks() ([]Bank, error) {
+func GetAllBanks() []Bank {
 	totalBanks := []Bank{}
 	for _, bank := range allBanks {
 		totalBanks = append(totalBanks, *bank)
 	}
-	return totalBanks, nil
+	return totalBanks
 }
 
-func (b *Bank) UpdateBank(param string, value interface{}) error {
+func (b *Bank) UpdateBank(param string, value interface{}) {
+
+	defer util.HandlePanic()
+
 	if param == "" {
-		return errors.New("parameter cannot be empty")
+		panic("parameter cannot be empty")
 	}
 	switch param {
 	case "FullName":
-		return b.updateBankFullName(value)
+		b.updateBankFullName(value)
 	default:
-		return errors.New("provide valid parameters")
+		panic("provide valid parameters")
 	}
 }
 
-func (b *Bank) updateBankFullName(value interface{}) error {
+func (b *Bank) updateBankFullName(value interface{}) {
+
+	defer util.HandlePanic()
+
 	strVal, ok := value.(string)
 	if !ok || strVal == "" {
-		return errors.New("value is empty, provide valid value")
+		panic("value is empty, provide valid value")
 	}
 	b.FullName = strVal
 	b.Abbreviation = getAbbreviation(strVal)
 	fmt.Println("Bank name updated successfully")
-	return nil
 }
 
-func DeleteBank(bankId int) error {
+func DeleteBank(bankId int) {
+
+	defer util.HandlePanic()
+
 	b, exists := allBanks[bankId]
 	if !exists {
-		return errors.New("bank not found")
+		panic("bank not found")
 	}
 
 	if len(b.Accounts) > 0 {
-		return errors.New("cannot delete bank with active accounts")
+		panic("cannot delete bank with active accounts")
 	}
 
 	delete(allBanks, bankId)
 	fmt.Println("Bank deleted successfully")
-	return nil
 }
 
-func (b *Bank) CreateNewBankTransaction(senderBankID int, recieverBankID int, amount float32) (*ledger.BankTransaction, error) {
+func (b *Bank) CreateNewBankTransaction(senderBankID int, recieverBankID int, amount float32) *ledger.BankTransaction {
 
 	newBankTransaction, err := ledger.NewBankTransaction(senderBankID, recieverBankID, amount)
 	if err != nil {
-		return nil, err
+		return nil
 	}
 
 	b.BankTransactions = append(b.BankTransactions, *newBankTransaction)
-	return newBankTransaction, nil
+	return newBankTransaction
 }
 
-func (b *Bank) GetBankTransactionAmount(bankID int) (float32, error) {
+func (b *Bank) GetBankTransactionAmount(bankID int) float32 {
+
+	defer util.HandlePanic()
 
 	if bankID < 0 {
-		return -1, errors.New("bank ID cannot be negative")
+		panic("bank ID cannot be negative")
 	}
 
 	var totalAmount float32 = 0.0
@@ -128,5 +141,5 @@ func (b *Bank) GetBankTransactionAmount(bankID int) (float32, error) {
 		}
 	}
 
-	return totalAmount, nil
+	return totalAmount
 }

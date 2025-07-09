@@ -4,6 +4,7 @@ import (
 	"banking_app/accounts"
 	"banking_app/bank"
 	"banking_app/passbook"
+	"banking_app/util"
 	"errors"
 	"fmt"
 )
@@ -19,6 +20,7 @@ type User struct {
 	Accounts     []*accounts.Accounts
 	Banks        []*bank.Bank
 	IsAdmin      bool
+	IsActive     bool
 }
 
 func NewUser(firstName, lastName string, isAdmin bool) (*User, error) {
@@ -36,6 +38,7 @@ func NewUser(firstName, lastName string, isAdmin bool) (*User, error) {
 		FirstName: firstName,
 		LastName:  lastName,
 		IsAdmin:   isAdmin,
+		IsActive:  true,
 	}
 
 	userMap[userId] = user
@@ -43,208 +46,22 @@ func NewUser(firstName, lastName string, isAdmin bool) (*User, error) {
 	return user, nil
 }
 
-func NewAdmin(firstName, lastName string) (*User, error) {
+func (u *User) CreateAccount(bankId int) {
 
-	newAdmin, err := NewUser(firstName, lastName, true)
-	if err != nil {
-		return nil, err
-	}
-	return newAdmin, nil
-}
+	defer util.HandlePanic()
 
-// ======================================================================Bank Related Methods=======================================================================
-
-func (u *User) AddBank(fullName string) (*bank.Bank, error) {
-	if !u.IsAdmin {
-		return nil, errors.New("only admin can add banks")
-	}
-
-	newBank, err := bank.NewBank(fullName)
-	if err != nil {
-		return nil, err
-	}
-	return newBank, nil
-}
-
-func (u *User) GetBankById(bankId int) (*bank.Bank, error) {
-	if !u.IsAdmin {
-		return nil, errors.New("only admin can add customers")
-	}
-
-	// return bank.GetBank(bankId)
-	bank, err := bank.GetBank(bankId)
-	if err != nil {
-		return nil, err
-	}
-
-	return bank, nil
-}
-
-func (u *User) GetAllBanks() ([]bank.Bank, error) {
-	if !u.IsAdmin {
-		panic("only admins can get all banks")
-	}
-	allbank, err := bank.GetAllBanks()
-	if err != nil {
-		return nil, errors.New("someting wrong")
-	}
-	return allbank, nil
-}
-
-func (u *User) UpdateBankById(bankId int, param string, value interface{}) error {
-	if !u.IsAdmin {
-		return errors.New("only admin can add banks")
-	}
-
-	if len(u.Banks) == 0 {
-		return errors.New("no banks associated with this admin")
-	}
-	bankToBeUpdated, err := u.GetBankById(bankId)
-	if err != nil {
-		return err
-	}
-	err = bankToBeUpdated.UpdateBank(param, value)
-	if err != nil {
-		return err
-	}
-	return err
-}
-
-func (u *User) DeleteBankById(bankId int) error {
-
-	if !u.IsAdmin {
-		return errors.New("only admin can add customers")
-	}
-	err := bank.DeleteBank(bankId)
-	if err != nil {
-		return err
-	}
-
-	index := -1
-	for i, b := range u.Banks {
-		if b.BankID == bankId {
-			index = i
-			break
-		}
-	}
-	if index != -1 {
-		u.Banks = append(u.Banks[:index], u.Banks[index+1:]...)
-	}
-
-	return nil
-}
-
-// =====================================================================Customer Related Methods========================================================================
-
-func (u *User) NewCustomer(firstName, lastName string) (*User, error) {
-	if !u.IsAdmin {
-		return nil, errors.New("only admin can add customers")
-	}
-	newCustomer, err := NewUser(firstName, lastName, false)
-	if err != nil {
-		return nil, err
-	}
-	return newCustomer, nil
-}
-
-func (u *User) GetCustomerById(customerId int) (*User, error) {
-	if !u.IsAdmin {
-		return nil, errors.New("only admin can Perform CRUD on customers")
-	}
-	customer, exists := userMap[customerId]
-	if !exists {
-		return nil, errors.New("customer not found with the given ID")
-	}
-	return customer, nil
-}
-
-func (u *User) GetAllUsers() ([]User, error) {
-	if !u.IsAdmin {
-		return nil, errors.New("unable to get all users")
-	}
-	totalUsers := []User{}
-	for _, user := range userMap {
-		totalUsers = append(totalUsers, *user)
-	}
-	return totalUsers, nil
-}
-
-func (u *User) UpdateCustomerById(customerId int, param string, value interface{}) error {
-
-	if !u.IsAdmin {
-		return errors.New("only admin can Perform CRUD on customers")
-	}
-	if customerId < 0 {
-		return errors.New("customerId cannot be negative")
-	}
-	targetCustomer, err := u.GetCustomerById(customerId)
-	if err != nil {
-		return err
-	}
-	if param == "" {
-		return errors.New("parameter cannot be empty")
-	}
-
-	switch param {
-	case "FirstName":
-		return targetCustomer.updateFirstName(value)
-	case "LastName":
-		return targetCustomer.updateLastName(value)
-	default:
-		return errors.New("invalid parameter for update")
-	}
-}
-
-func (target *User) updateFirstName(value interface{}) error {
-	strVal, ok := value.(string)
-	if !ok || strVal == "" {
-		return errors.New("value is empty, provide valid value")
-	}
-	target.FirstName = strVal
-	fmt.Println("First name updated successfully")
-	return nil
-}
-
-func (target *User) updateLastName(value interface{}) error {
-	strVal, ok := value.(string)
-	if !ok || strVal == "" {
-		return errors.New("value is empty, provide valid value")
-	}
-	target.LastName = strVal
-	fmt.Println("Last name updated successfully")
-	return nil
-}
-
-func (u *User) DeleteCustomerById(customerId int) error {
-	if !u.IsAdmin {
-		return errors.New("only admin can Perform CRUD on customers")
-	}
-	if customerId < 0 {
-		return errors.New("customerId cannot be negative")
-	}
-
-	_, exists := userMap[customerId]
-	if !exists {
-		return errors.New("customer not found with the given ID")
-	}
-
-	delete(userMap, customerId)
-	return nil
-}
-
-// ======================================================================Transaction related Methods===================================================================
-
-func (u *User) CreateAccount(bankId int) error {
 	if u.IsAdmin {
-		return errors.New("only customers can create bank accounts")
+		panic("only customers can create bank accounts")
 	}
-	targetBank, err := bank.GetBank(bankId)
-	if err != nil {
-		return err
+	if !u.IsActive {
+		panic("customer needs to be active to get  banks")
 	}
+
+	targetBank := bank.GetBank(bankId)
+
 	newAccount, err := accounts.NewAccount(bankId, u.UserID)
 	if err != nil {
-		return err
+		panic(err)
 	}
 
 	u.Accounts = append(u.Accounts, newAccount)
@@ -254,183 +71,170 @@ func (u *User) CreateAccount(bankId int) error {
 
 	fmt.Printf("Account created successfully for %s %s | Account No: %d | Balance: %.2f | Bank: %s\n",
 		u.FirstName, u.LastName, newAccount.AccountNo, newAccount.Balance, targetBank.FullName)
-	return nil
 }
 
-func (u *User) CalculateTotalBalance() (float32, error) {
+func (u *User) CalculateTotalBalance() float32 {
+
+	defer util.HandlePanic()
+
 	if u.IsAdmin {
-		return 0, errors.New("only customers can see Total Balance")
+		panic("only customers can see Total Balance")
+	}
+	if !u.IsActive {
+		panic("customer needs to be active to get  calculate balance")
 	}
 	total := float32(0)
 	for _, acc := range u.Accounts {
 		total += acc.Balance
 	}
 	u.TotalBalance = total
-	return total, nil
+	return total
 }
 
-func (u *User) GetMyAccountBlance(accountNo int) (float32, error) {
+func (u *User) GetMyAccountBlance(accountNo int) float32 {
+
+	defer util.HandlePanic()
+
 	if u.IsAdmin {
-		return 0, errors.New("only valid customer can see account balance")
+		panic("only valid customer can see account balance")
+	}
+	if !u.IsActive {
+		panic("customer needs to be active to get balance")
 	}
 	for i := range u.Accounts {
 		if u.Accounts[i].AccountNo == accountNo {
-			return u.Accounts[i].Balance, nil
+			return u.Accounts[i].Balance
 		}
 	}
-	return 0, errors.New("provided account number is not related to requesting user")
+	panic("provided account number is not related to requesting user")
 }
 
-func (u *User) GetSelfAccountById(accountNo int) (*accounts.Accounts, error) {
+func (u *User) GetSelfAccountById(accountNo int) *accounts.Accounts {
+
+	defer util.HandlePanic()
+
 	if u.IsAdmin {
-		return nil, nil
+		panic("only customer can get own account")
+	}
+	if !u.IsActive {
+		panic("customer needs to be active to get account")
 	}
 
 	for i := range u.Accounts {
 		if u.Accounts[i].AccountNo == accountNo {
-			return u.Accounts[i], nil
+			return u.Accounts[i]
 		}
 	}
-	return nil, fmt.Errorf("account %d not found for user %s %s", accountNo, u.FirstName, u.LastName)
+	panic("account not found for use ")
 }
 
-func (u *User) TransferBetweenSelfAccounts(fromAccNo, toAccNo int, amount float32) error {
+func (u *User) TransferBetweenSelfAccounts(fromAccNo, toAccNo int, amount float32) {
+
+	defer util.HandlePanic()
+
 	if u.IsAdmin {
-		return errors.New("admin cannot perform transfers")
+		panic("admin cannot perform transfers")
+	}
+	if !u.IsActive {
+		panic("customer needs to be active to transefer money")
 	}
 
-	fromAcc, err := u.GetSelfAccountById(fromAccNo)
-	if err != nil {
-		return fmt.Errorf("source account retrieval failed: %v", err)
-	}
+	fromAcc := u.GetSelfAccountById(fromAccNo)
 
-	toAcc, err := u.GetSelfAccountById(toAccNo)
-	if err != nil {
-		return fmt.Errorf("target account retrieval failed: %v", err)
-	}
+	toAcc := u.GetSelfAccountById(toAccNo)
 
 	if fromAcc.AccountNo == toAcc.AccountNo {
-		return errors.New("cannot transfer to the same account")
+		panic("cannot transfer to the same account")
 	}
 
-	if err := fromAcc.SelfTransfer(amount, toAcc); err != nil {
-		return fmt.Errorf("transfer between accounts failed: %v", err)
-	}
+	fromAcc.SelfTransfer(amount, toAcc)
 
 	fmt.Printf("Successfully transferred Rs.%.2f from Acc#%d to Acc#%d\n", amount, fromAccNo, toAccNo)
-	return nil
 }
 
-func (u *User) TransferToOtherUser(fromAccNo, targetAccNo int, amount float32) error {
+func (u *User) TransferToOtherUser(fromAccNo, targetAccNo int, amount float32) {
+
+	defer util.HandlePanic()
+
 	if u.IsAdmin {
-		return errors.New("admin cannot perform transfers")
+		panic("admin cannot perform transfers")
+	}
+	if !u.IsActive {
+		panic("customer needs to be active to transefer money")
 	}
 
-	fromAcc, err := u.GetSelfAccountById(fromAccNo)
-	if err != nil {
-		return fmt.Errorf("source account retrieval failed: %v", err)
-	}
+	fromAcc := u.GetSelfAccountById(fromAccNo)
 
 	if fromAcc == nil {
-		return fmt.Errorf("source account %d not found for user %s %s", fromAccNo, u.FirstName, u.LastName)
+		panic("source account not found for user")
 	}
 
-	targetAcc, err := accounts.GetReceiverAccountById(targetAccNo)
-	if err != nil {
-		return fmt.Errorf("target account retrieval failed: %v", err)
-	}
+	targetAcc := accounts.GetReceiverAccountById(targetAccNo)
 
 	senderBankID := fromAcc.BankId
 	receiverBankID := targetAcc.BankId
 
-	senderBank, err := bank.GetBank(senderBankID)
-	if err != nil {
-		return err
-	}
+	senderBank := bank.GetBank(senderBankID)
 
 	senderBank.CreateNewBankTransaction(senderBankID, receiverBankID, amount)
 
-	if err := fromAcc.BankTransfer(amount, targetAccNo); err != nil {
-		return fmt.Errorf("transfer to other user failed: %v", err)
-	}
+	fromAcc.BankTransfer(amount, targetAccNo)
 
 	fmt.Printf("Successfully transferred Rs.%.2f from your Acc#%d to target Acc#%d\n", amount, fromAccNo, targetAccNo)
-	return nil
 }
 
-func (u *User) WithdrawFromAccount(accountNo int, amount float32) error {
+func (u *User) WithdrawFromAccount(accountNo int, amount float32) {
+
+	defer util.HandlePanic()
+
 	if u.IsAdmin {
-		return errors.New("admin cannot perform withdrawals")
+		panic("admin cannot perform withdrawals")
+	}
+	if !u.IsActive {
+		panic("customer needs to be active to withdraw money")
 	}
 
 	for _, acc := range u.Accounts {
 		if acc.AccountNo == accountNo {
-			return acc.Withdraw(amount)
+			acc.Withdraw(amount)
 		}
 	}
 
-	return errors.New("account not found for this user")
+	panic("account not found for this user")
 }
 
 func (u *User) DepositToAccount(accountNo int, amount float32) error {
+
+	defer util.HandlePanic()
+
 	if u.IsAdmin {
 		return errors.New("admin cannot perform deposits")
+	}
+	if !u.IsActive {
+		panic("customer needs to be active to deposite money")
 	}
 
 	for _, acc := range u.Accounts {
 		if acc.AccountNo == accountNo {
-			return acc.Deposit(amount)
+			acc.Deposit(amount)
 		}
 	}
 
 	return errors.New("account not found for this user")
 }
 
-// ====================================================================== Passbook entries with pagination ===================================================================
+func (u *User) ViewMyPassbook(accountNo, page, pageSize int) []passbook.Transaction {
 
-func (u *User) ViewMyPassbook(accountNo, page, pageSize int) ([]passbook.Transaction, error) {
-	if u.IsAdmin {
-		return nil, errors.New("admin cannot view passbook as customer")
+	defer util.HandlePanic()
+
+	if !u.IsAdmin {
+		panic("only customer can see his own passbook")
+	}
+	if !u.IsActive {
+		panic("customer needs to be active to view passbook")
 	}
 
-	acc, err := u.GetSelfAccountById(accountNo)
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account: %v", err)
-	}
+	acc := u.GetSelfAccountById(accountNo)
 
 	return acc.GetPassbook(page, pageSize)
 }
-
-func (u *User) ViewAccountSpecificPassbook(accountNo int, page, pageSize int) ([]passbook.Transaction, error) {
-	if !u.IsAdmin {
-		return nil, errors.New("only admin can view other users' passbooks")
-	}
-
-	targetAcc, err := accounts.GetReceiverAccountById(accountNo)
-	if err != nil {
-		return nil, fmt.Errorf("account retrieval failed: %v", err)
-	}
-
-	return targetAcc.GetPassbook(page, pageSize)
-}
-
-// ===============================================================================Ledger===========================================================================================
-func (u *User) GetBankTransactionAmount(bankAId, bankBId int) (float32, error) {
-
-	if !u.IsAdmin {
-		return 0, errors.New("admin cannot view passbook as customer")
-	}
-
-	bankA, err := u.GetBankById(bankAId)
-	if err != nil {
-		return 0, errors.New("bank A not found")
-	}
-
-	amount, err := bankA.GetBankTransactionAmount(bankBId)
-	if err != nil {
-		return -1, err
-	}
-	return amount, nil
-}
-
-//
