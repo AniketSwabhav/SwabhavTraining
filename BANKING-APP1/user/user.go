@@ -57,8 +57,10 @@ func (u *User) CreateAccount(bankId int) {
 		panic("customer needs to be active to get  banks")
 	}
 
-	targetBank := bank.GetBank(bankId)
-
+	targetBank, err := bank.GetBank(bankId)
+	if err != nil {
+		panic(err)
+	}
 	newAccount, err := accounts.NewAccount(bankId, u.UserID)
 	if err != nil {
 		panic(err)
@@ -169,12 +171,18 @@ func (u *User) TransferToOtherUser(fromAccNo, targetAccNo int, amount float32) {
 		panic("source account not found for user")
 	}
 
-	targetAcc := accounts.GetReceiverAccountById(targetAccNo)
+	targetAcc, err := accounts.GetReceiverAccountById(targetAccNo)
+	if err != nil {
+		panic(err)
+	}
 
 	senderBankID := fromAcc.BankId
 	receiverBankID := targetAcc.BankId
 
-	senderBank := bank.GetBank(senderBankID)
+	senderBank, err := bank.GetBank(senderBankID)
+	if err != nil {
+		panic(err)
+	}
 
 	senderBank.CreateNewBankTransaction(senderBankID, receiverBankID, amount)
 
@@ -236,5 +244,10 @@ func (u *User) ViewMyPassbook(accountNo, page, pageSize int) []passbook.Transact
 
 	acc := u.GetSelfAccountById(accountNo)
 
-	return acc.GetPassbook(page, pageSize)
+	passbook, err := acc.GetPassbook(page, pageSize)
+	if err != nil {
+		panic(err)
+	}
+
+	return passbook
 }

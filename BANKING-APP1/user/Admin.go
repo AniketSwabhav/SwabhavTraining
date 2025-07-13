@@ -48,7 +48,10 @@ func (u *User) GetBankById(bankId int) *bank.Bank {
 	if !u.IsActive {
 		panic("admin needs to be active to get  banks")
 	}
-	bank := bank.GetBank(bankId)
+	bank, err := bank.GetBank(bankId)
+	if err != nil {
+		panic(err)
+	}
 
 	return bank
 }
@@ -249,9 +252,16 @@ func (u *User) ViewAccountSpecificPassbook(accountNo int, page, pageSize int) []
 		panic("admin needs to be active to View Account Specific Passbook")
 	}
 
-	targetAcc := accounts.GetReceiverAccountById(accountNo)
+	targetAcc, err := accounts.GetReceiverAccountById(accountNo)
+	if err != nil {
+		panic(err)
+	}
+	passbook, err := targetAcc.GetPassbook(page, pageSize)
+	if err != nil {
+		panic(err)
+	}
 
-	return targetAcc.GetPassbook(page, pageSize)
+	return passbook
 }
 
 func (u *User) GetBankTransactionAmount(bankAId, bankBId int) float32 {
@@ -267,7 +277,10 @@ func (u *User) GetBankTransactionAmount(bankAId, bankBId int) float32 {
 
 	bankA := u.GetBankById(bankAId)
 
-	amount := bankA.GetBankTransactionAmount(bankBId)
+	amount, err := bankA.GetBankTransactionAmount(bankBId)
+	if err != nil {
+		panic(err)
+	}
 
 	return amount
 }

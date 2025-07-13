@@ -45,25 +45,25 @@ func NewAccount(bankId int, userId int) (*Accounts, error) {
 	return newAcc, nil
 }
 
-func GetReceiverAccountById(accountNo int) *Accounts {
+func GetReceiverAccountById(accountNo int) (*Accounts, error) {
 
 	defer util.HandlePanic()
 
 	if acc, exists := AccountsMap[accountNo]; exists {
-		return acc
+		return acc, nil
 	}
-	panic("receiver account not found")
+	return nil, errors.New("receiver account not found")
 }
 
-func (acc *Accounts) SelfTransfer(amount float32, toacc *Accounts) {
+func (acc *Accounts) SelfTransfer(amount float32, toacc *Accounts) error {
 
 	defer util.HandlePanic()
 
 	if amount <= 0 {
-		panic("transfer amount must be positive")
+		return errors.New("transfer amount must be positive")
 	}
 	if acc.Balance < amount {
-		panic("insufficient balance for transfer")
+		return errors.New("insufficient balance for transfer")
 	}
 
 	acc.Balance -= amount
@@ -74,22 +74,26 @@ func (acc *Accounts) SelfTransfer(amount float32, toacc *Accounts) {
 
 	creditTransaction := passbook.NewTransaction("SelfTransferCredit", amount, toacc.Balance, fmt.Sprintf("Received Rs.%.2f from Account #%d", amount, acc.AccountNo))
 	toacc.Passbook = append(toacc.Passbook, creditTransaction)
+	return nil
 
 }
 
-func (acc *Accounts) BankTransfer(amount float32, targetAccNo int) {
+func (acc *Accounts) BankTransfer(amount float32, targetAccNo int) error {
 
 	defer util.HandlePanic()
 
 	if amount <= 0 {
-		panic("transfer amount must be positive")
+		return errors.New("transfer amount must be positive")
 	}
 
 	if acc.Balance < amount {
-		panic("insufficient balance for transfer")
+		return errors.New("insufficient balance for transfer")
 	}
 
-	targetAcc := GetReceiverAccountById(targetAccNo)
+	targetAcc, err := GetReceiverAccountById(targetAccNo)
+	if err != nil {
+		return err
+	}
 
 	acc.Balance -= amount
 	targetAcc.Balance += amount
@@ -99,50 +103,54 @@ func (acc *Accounts) BankTransfer(amount float32, targetAccNo int) {
 
 	creditTransaction := passbook.NewTransaction("BankTransferCredit", amount, targetAcc.Balance, fmt.Sprintf("Received Rs.%.2f from Account #%d", amount, acc.AccountNo))
 	targetAcc.Passbook = append(targetAcc.Passbook, creditTransaction)
+
+	return nil
 }
 
-func (acc *Accounts) Withdraw(amount float32) {
+func (acc *Accounts) Withdraw(amount float32) error {
 
 	defer util.HandlePanic()
 
 	if amount <= 0 {
-		panic("withdrawal amount must be positive")
+		return errors.New("withdrawal amount must be positive")
 	}
 	if acc.Balance < amount {
-		panic("insufficient balance for withdrawal")
+		return errors.New("insufficient balance for withdrawal")
 	}
 	acc.Balance -= amount
 
 	withdrawTransaction := passbook.NewTransaction("Withdrawal", amount, acc.Balance, fmt.Sprintf("Withdrawn Rs.%.2f", amount))
 	acc.Passbook = append(acc.Passbook, withdrawTransaction)
+	return nil
 }
 
-func (acc *Accounts) Deposit(amount float32) {
+func (acc *Accounts) Deposit(amount float32) error {
 
 	defer util.HandlePanic()
 
 	if amount <= 0 {
-		panic("deposit amount must be positive")
+		return errors.New("deposit amount must be positive")
 	}
 
 	acc.Balance += amount
 
 	depositTransaction := passbook.NewTransaction("Deposite", amount, acc.Balance, fmt.Sprintf("Deposited Rs.%.2f", amount))
 	acc.Passbook = append(acc.Passbook, depositTransaction)
+	return nil
 }
 
-func (acc *Accounts) GetPassbook(page, pageSize int) []passbook.Transaction {
+func (acc *Accounts) GetPassbook(page, pageSize int) ([]passbook.Transaction, error) {
 
 	defer util.HandlePanic()
 
 	if page <= 0 || pageSize <= 0 {
-		panic("page and pageSize must be positive integers")
+		return nil, errors.New("page and pageSize must be positive integers")
 	}
 
 	start := (page - 1) * pageSize
 
 	if start >= len(acc.Passbook) {
-		return []passbook.Transaction{}
+		return []passbook.Transaction{}, nil
 	}
 
 	end := start + pageSize
@@ -150,6 +158,6 @@ func (acc *Accounts) GetPassbook(page, pageSize int) []passbook.Transaction {
 		end = len(acc.Passbook)
 	}
 
-	return acc.Passbook[start:end]
+	return acc.Passbook[start:end], nil
 
 }

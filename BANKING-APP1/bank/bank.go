@@ -48,15 +48,13 @@ func getAbbreviation(input string) string {
 	return strings.Join(firstLetters, "")
 }
 
-func GetBank(bankId int) *Bank {
-
-	defer util.HandlePanic()
+func GetBank(bankId int) (*Bank, error) {
 
 	bank, exists := allBanks[bankId]
 	if !exists {
-		panic("bank not found")
+		return nil, errors.New("bank not found")
 	}
-	return bank
+	return bank, nil
 }
 
 func GetAllBanks() []Bank {
@@ -67,49 +65,52 @@ func GetAllBanks() []Bank {
 	return totalBanks
 }
 
-func (b *Bank) UpdateBank(param string, value interface{}) {
+func (b *Bank) UpdateBank(param string, value interface{}) error {
 
 	defer util.HandlePanic()
 
 	if param == "" {
-		panic("parameter cannot be empty")
+		return errors.New("parameter cannot be empty")
 	}
 	switch param {
 	case "FullName":
 		b.updateBankFullName(value)
 	default:
-		panic("provide valid parameters")
+		return errors.New("provide valid parameters")
 	}
+	return nil
 }
 
-func (b *Bank) updateBankFullName(value interface{}) {
+func (b *Bank) updateBankFullName(value interface{}) error {
 
 	defer util.HandlePanic()
 
 	strVal, ok := value.(string)
 	if !ok || strVal == "" {
-		panic("value is empty, provide valid value")
+		return errors.New("value is empty, provide valid value")
 	}
 	b.FullName = strVal
 	b.Abbreviation = getAbbreviation(strVal)
 	fmt.Println("Bank name updated successfully")
+	return nil
 }
 
-func DeleteBank(bankId int) {
+func DeleteBank(bankId int) error {
 
 	defer util.HandlePanic()
 
 	b, exists := allBanks[bankId]
 	if !exists {
-		panic("bank not found")
+		return errors.New("bank not found")
 	}
 
 	if len(b.Accounts) > 0 {
-		panic("cannot delete bank with active accounts")
+		return errors.New("cannot delete bank with active accounts")
 	}
 
 	delete(allBanks, bankId)
 	fmt.Println("Bank deleted successfully")
+	return nil
 }
 
 func (b *Bank) CreateNewBankTransaction(senderBankID int, recieverBankID int, amount float32) *ledger.BankTransaction {
@@ -123,17 +124,18 @@ func (b *Bank) CreateNewBankTransaction(senderBankID int, recieverBankID int, am
 	return newBankTransaction
 }
 
-func (b *Bank) GetBankTransactionAmount(bankID int) float32 {
+func (b *Bank) GetBankTransactionAmount(bankID int) (float32, error) {
 
 	defer util.HandlePanic()
 
 	if bankID < 0 {
-		panic("bank ID cannot be negative")
+		return 0, errors.New("bank ID cannot be negative")
 	}
 
 	var totalAmount float32 = 0.0
 
 	for _, transactions := range b.BankTransactions {
+
 		if (transactions.SenderBankID == b.BankID) && (transactions.ReceiverBankID == bankID) {
 			totalAmount -= transactions.Amount
 		} else if (transactions.SenderBankID == bankID) && (transactions.ReceiverBankID == b.BankID) {
@@ -141,5 +143,5 @@ func (b *Bank) GetBankTransactionAmount(bankID int) float32 {
 		}
 	}
 
-	return totalAmount
+	return totalAmount, nil
 }
