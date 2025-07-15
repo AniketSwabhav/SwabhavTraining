@@ -37,7 +37,8 @@ func (b *Board) MarkCell(pos int, symbol string) error {
 	if b.Cells[pos].Mark != " " {
 		return errors.New("cell is already marked")
 	}
-	b.Cells[pos].Mark = symbol
+	b.Cells[pos].SetMark(symbol)
+
 	return nil
 }
 
@@ -66,10 +67,14 @@ func (b *Board) CheckDraw() bool {
 	return true
 }
 
-func (b *Board) Reset() {
+func (b *Board) Reset() error {
 	for _, c := range b.Cells {
-		c.Mark = " "
+		err := c.Clear()
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func (b *Board) PrintBoard() {

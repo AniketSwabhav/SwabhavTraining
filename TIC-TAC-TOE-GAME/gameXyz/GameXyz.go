@@ -1,4 +1,4 @@
-package game
+package gamexyz
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"tic_tac_toe_game/util"
 )
 
-type Game struct {
+type GameXyz struct {
 	Players    [2]player.Player
 	Board      board.Board
 	Turn       int
@@ -16,7 +16,7 @@ type Game struct {
 	IsGameOver bool
 }
 
-func NewGame(player1, player2 string, player1Symbol, player2Symbol string) (*Game, error) {
+func NewGame(player1, player2 string, player1Symbol, player2Symbol string) (*GameXyz, error) {
 
 	p1, err := player.NewPlayer(player1, player1Symbol)
 	if err != nil {
@@ -29,7 +29,7 @@ func NewGame(player1, player2 string, player1Symbol, player2Symbol string) (*Gam
 
 	board := board.NewBoard()
 
-	return &Game{
+	return &GameXyz{
 		Players:    [2]player.Player{*p1, *p2},
 		Board:      *board,
 		Turn:       0,
@@ -38,7 +38,7 @@ func NewGame(player1, player2 string, player1Symbol, player2Symbol string) (*Gam
 	}, nil
 }
 
-func (g *Game) Play(position int) {
+func (g *GameXyz) Play(position int) {
 
 	defer util.HandlePanic()
 
@@ -70,7 +70,7 @@ func (g *Game) Play(position int) {
 	g.Turn++
 }
 
-func (g *Game) Reset() {
+func (g *GameXyz) Reset() {
 	err := g.Board.Reset()
 	if err != nil {
 		panic(err)
@@ -81,11 +81,6 @@ func (g *Game) Reset() {
 	g.Winner = player.Player{}
 }
 
-func (g *Game) Printer() {
+func (g *GameXyz) Printer() {
 	g.Board.PrintBoard()
 }
-
-//surprise
-//insight
-//pride
-//gratitude
