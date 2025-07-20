@@ -1,0 +1,107 @@
+
+
++--------------------+          +-----------------------+
+|     Resource       |          |    RolePermission     |
++--------------------+          +-----------------------+
+| - resource_id: int  | 1      *| - role_permission_id: int |
+| - resource_name: str|<---------| - role: Role          |
++--------------------+          | - resource: Resource   |
+                               | - can_create: bool     |
+                               | - can_read: bool       |
+                               | - can_update: bool     |
+                               | - can_delete: bool     |
+                               +-----------------------+
+
+
+
++-----------------+          +----------------+          +----------------------+
+|      Role       |          |      User      |          |    UserCredential    |
++-----------------+          +----------------+          +----------------------+
+| - role_id: int  |<>--------| - user_id: int |<>--------| - user_id: int       |
+| - role_name:    | 1      * | - name: string | 1      1 | - username: string   |
+|   string        |          | - email: string|          | - password_hash: string|
++-----------------+          | - is_active: bool|        | - last_login: DateTime |
+                             | - role: Role   |          +----------------------+
+                             +----------------+
+                                    |
+                                    | 1
+                                    |
+                             +---------------------+
+                             |   Supplier          |
+                             +---------------------+
+                             | - supplier_id: int  |
+                             | - name: string      |
+                             | - email: string     |
+                             | - phone: string     |
+                             | - address: string   |
+                             | - is_active: bool   |
+                             | - created_at: DateTime |
+                             | - user: User        |  (1 to 1 association)
+                             +---------------------+
+                                    |
+                                    | 1..*
+                                    |
+                            +----------------------+
+                            |  SupplierContact     |
+                            +----------------------+
+                            | - contact_id: int    |
+                            | - name: string       |
+                            | - email: string      |
+                            | - phone: string      |
+                            | - designation: string|
+                            | - is_primary: bool   |
+                            | - supplier: Supplier |
+                            +----------------------+
+
++--------------------+          +----------------+
+|     Category       |          |    Product     |
++--------------------+          +----------------+
+| - category_id: int  | 1      *| - product_id: int |
+| - name: string      |<---------| - name: string    |
+| - description: text |          | - description: text|
++--------------------+          | - price: decimal  |
+                                | - unit: string    |
+                                | - is_active: bool |
+                                | - created_at: datetime|
+                                | - supplier: Supplier  | (many to one)
+                                | - category: Category  | (many to one)
+                                +----------------+
+
++-------------------+            +---------------------+            +-------------------------+
+|    Warehouse      |            |      Inventory      |            |   InventoryMovement     |
++-------------------+            +---------------------+            +-------------------------+
+| - warehouse_id: int| 1        *| - inventory_id: int | 1       *  | - movement_id: int       |
+| - name: string     |<----------| - product: Product  |<-----------| - inventory: Inventory   |
+| - location: string |           | - warehouse: Warehouse|          | - user: User             |
+| - is_active: bool  |           | - quantity: int     |            | - movement_type: string  |
++-------------------+            | - updated_at: datetime|          | - quantity: int          |
+                                 +---------------------+            | - reason: string         |
+                                                                    | - created_at: datetime   |
+                                                                    +-------------------------+
+
++-------------------+           +---------------------+            +------------------+           +-----------------+
+|      Order        |           |    OrderItem        |            |     Payment      |           |     Refund      |
++-------------------+           +---------------------+            +------------------+           +-----------------+
+| - order_id: int   | 1       * | - order_item_id: int |           | - payment_id: int | 1       * | - refund_id: int |
+| - user: User      |<----------| - order: Order       | 1       1 | - order: Order     |<----------| - payment: Payment|
+| - order_date: datetime|       | - product: Product   |---------->| - payment_date: datetime |     | - refund_date: datetime |
+| - status: string  |           | - quantity: int      |           | - amount: decimal  |           | - refund_amount: decimal |
+| - total_amount: decimal|      | - price: decimal     |           | - payment_method: string|      | - refund_reason: string  |
++-------------------+           +---------------------+            | - status: string   |           +-----------------+
+                                                                   +------------------+           
+
+
++---------------------+              +-------------------------+
+|     Shipment        |              |    ShipmentEvent        |
++---------------------+              +-------------------------+
+| - shipment_id: int  | 1         *  | - event_id: int         |
+| - order: Order      |<-------------| - shipment: Shipment    |
+| - handled_by: User  |              | - event_type: string    |
+| - carrier: string   |              | - event_date: datetime  |
+| - tracking_number   |              | - location: string      |
+| - shipped_date      |              | - notes: string         |
+| - estimated_delivery|              +-------------------------+
+| - delivery_status   |
+| - created_at        |
+| - updated_at        |
++---------------------+

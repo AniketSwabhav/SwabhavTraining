@@ -1,0 +1,161 @@
+Role-specific Behaviors
+
+a. Admin Role
+Full CRUD on all resources.
+Example role_permissions entries for Admin:
+For each resource:
+  can_create = TRUE
+  can_read = TRUE
+  can_update = TRUE
+  can_delete = TRUE
+
+
+b. Supplier Role
+Limited to Product resource: READ and UPDATE only.
+Cannot manage users, orders, payments, etc.
+Example role_permissions entry for Supplier:
+resource_name = 'Product':
+  can_create = FALSE
+  can_read = TRUE
+  can_update = TRUE
+  can_delete = FALSE
+For other resources:
+can_create = FALSE
+can_read = FALSE
+can_update = FALSE
+can_delete = FALSE
+
+
+c. Warehouse Staff Role
+Manage inventory (add/update stock), no deletes.
+Example role_permissions entry for Warehouse Staff:
+resource_name = 'Inventory':
+  can_create = TRUE
+  can_read = TRUE
+  can_update = TRUE
+  can_delete = FALSE
+Other resources might be no access or read-only depending on your design.
+
+
+d. Customer Role
+Can create and view orders only.
+Example role_permissions entry for Customer:
+resource_name = 'Order':
+  can_create = TRUE
+  can_read = TRUE
+  can_update = FALSE
+  can_delete = FALSE
+No access to other resources unless explicitly granted.
+
+
+e. Logistics Role (New)
+Responsible for managing shipments and tracking events.
+
+Permissions:
+resource_name = 'Shipment':
+  can_create = TRUE
+  can_read   = TRUE
+  can_update = TRUE
+  can_delete = FALSE
+
+resource_name = 'ShipmentEvent':
+  can_create = TRUE
+  can_read   = TRUE
+  can_update = TRUE
+  can_delete = FALSE
+
+All other resources:
+  can_create = FALSE
+  can_read   = FALSE
+  can_update = FALSE
+  can_delete = FALSE
+
+
+=========================================================================================================
+
+1. Admin Role
+Purpose:
+System owner or superuser with unrestricted access across all modules.
+
+Responsibilities:
+Manage users and assign roles.
+Configure permissions for other roles.
+Manage suppliers and their contact information.
+Full control over products, inventory, orders, payments, shipments, and refunds.
+Oversee system configuration, audits, and reports.
+
+Access:
+Full CRUD access to all resources (Products, Orders, Shipments, etc.)
+Has visibility into every action performed by other roles.
+--------------------------------------------------------------------------------------------------------
+2. Supplier Role
+Purpose:
+Suppliers onboarded to manage and update details about the products they provide.
+
+Responsibilities:
+View and update their own products.
+Maintain accurate pricing, descriptions, and stock units (if applicable).
+View basic supplier profile and contacts.
+
+Limitations:
+Cannot access orders, payments, inventory, shipments, or users.
+
+Access:
+READ/UPDATE access to Product resource.
+No access to other modules.
+--------------------------------------------------------------------------------------------------------
+3. Warehouse Staff Role
+Purpose:
+Responsible for physically handling inventory in the warehouse.
+
+Responsibilities:
+Update inventory levels based on received or dispatched stock.
+Record inventory movements (e.g., IN/OUT/TRANSFER).
+Ensure stock accuracy and perform regular updates.
+
+Limitations:
+Cannot delete inventory records.
+Cannot access payments, orders, users, or shipments.
+
+Access:
+CREATE/READ/UPDATE access to Inventory, InventoryMovements.
+No access to Users, Orders, Payments, Shipments.
+--------------------------------------------------------------------------------------------------------
+4. Customer Role
+Purpose:
+End users who place orders and interact with the platform as buyers.
+
+Responsibilities:
+Browse available products and categories.
+Place new orders.
+View their own order history and status.
+Make payments.
+
+Limitations:
+Cannot update orders after placing them.
+Cannot access supplier, inventory, or shipment backend data.
+
+Access:
+CREATE/READ access to Order, Payment (read their own).
+No access to Inventory, Products (except via storefront API), Shipments, Refunds.
+--------------------------------------------------------------------------------------------------------
+5. Logistics Role 
+Purpose:
+Handles the shipping process, manages tracking and delivery.
+
+Responsibilities:
+Create and manage shipment records for orders.
+Assign carriers, enter tracking numbers.
+Update shipment statuses (e.g., Shipped, In Transit, Delivered).
+Add detailed shipment events for tracking purposes.
+
+Limitations:
+Cannot handle payments, inventory, or user management.
+Can only interact with orders indirectly through shipment linkage.
+
+Access:
+CREATE/READ/UPDATE access to:
+Shipments
+ShipmentEvents
+
+--------------------------------------------------------------------------------------------------------

@@ -1,0 +1,252 @@
+Supply chain management system 
+
+                                     ER tables
+=====================================================================================
+=====================================================================================
+
+
+
+====================================Permissions======================================
+
+//resources:- 
+resource_id INT PRIMARY KEY AUTO_INCREMENT,
+resource_name VARCHAR(100) UNIQUE NOT NULL
+
+//role_permissions :-
+role_permission_id INT PRIMARY KEY AUTO_INCREMENT,
+role_id INT,
+resource_id INT,
+can_create BOOLEAN,
+can_read BOOLEAN,
+can_update BOOLEAN,
+can_delete BOOLEAN,
+FOREIGN KEY (role_id) REFERENCES roles(role_id),
+FOREIGN KEY (resource_id) REFERENCES resources(resource_id),
+UNIQUE(role_id, resource_id)
+
+Relationship Summary
+role_permissions.role_id → roles.role_id (Many → One)
+role_permissions.resource_id → resources.resource_id (Many → One)
+
+====================================User module====================================== 
+//roles :- 
+role_id INT PRIMARY KEY AUTO_INCREMENT,
+role_name VARCHAR(50) UNIQUE NOT NULL
+
+//users :- users ↔ roles	(Many users → One role)
+user_id INT PRIMARY KEY AUTO_INCREMENT,
+name VARCHAR(100) NOT NULL,
+email VARCHAR(100) UNIQUE NOT NULL,
+role_id INT,
+is_active BOOLEAN DEFAULT TRUE,
+FOREIGN KEY (role_id) REFERENCES roles(role_id)
+
+//user_credentials :- user_credentials ↔ users (One-to-one (same user_id))
+user_id INT PRIMARY KEY,
+username VARCHAR(50) UNIQUE NOT NULL,
+password_hash VARCHAR(255) NOT NULL,
+last_login DATETIME,
+FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+
+Relationship Summary :-
+
+users.role_id → roles.role_id (Many → One)
+user_credentials.user_id → users.user_id (One ↔ One)
+
+====================================Supplier module====================================== 
+
+//Supplier :- supplier_contacts.supplier_id → suppliers.supplier_id (Many-to-One) 
+supplier_id INT PRIMARY KEY AUTO_INCREMENT,
+user_id INT UNIQUE,  (1 user ↔ 1 supplier).
+name VARCHAR(100) NOT NULL,
+email VARCHAR(100),
+phone VARCHAR(20),
+address TEXT,
+is_active BOOLEAN DEFAULT TRUE,
+created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL
+
+//supplier_contacts:- [Contact person(s) per supplier]
+contact_id INT PRIMARY KEY AUTO_INCREMENT,
+supplier_id INT,
+name VARCHAR(100) NOT NULL,
+email VARCHAR(100),
+phone VARCHAR(20),
+designation VARCHAR(100),
+is_primary BOOLEAN DEFAULT FALSE,
+FOREIGN KEY (supplier_id) REFERENCES suppliers(supplier_id) ON DELETE CASCADE
+
+Relationship Summary :-
+
+suppliers.user_id → users.user_id (One ↔ One)
+supplier_contacts.supplier_id → suppliers.supplier_id (Many → One)
+
+====================================Product module====================================== 
+
+//Product :- [products → suppliers (Many products per supplier)] [products → categories (Many products per category)]
+product_id INT PRIMARY KEY AUTO_INCREMENT,
+supplier_id INT,
+category_id INT,
+name VARCHAR(150) NOT NULL,
+description TEXT,
+price DECIMAL(10, 2) NOT NULL,
+unit VARCHAR(50),
+is_active BOOLEAN DEFAULT TRUE,
+created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+FOREIGN KEY (supplier_id) REFERENCES suppliers(supplier_id) ON DELETE SET NULL,
+FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE SET NULL
+
+
+//categories :- 
+category_id INT PRIMARY KEY AUTO_INCREMENT,
+name VARCHAR(100) NOT NULL UNIQUE,
+description TEXT
+
+
+Relationship Summary :-
+
+products.supplier_id → suppliers.supplier_id (Many → One)
+products.category_id → categories.category_id (Many → One)
+
+====================================Inventory module====================================== 
+
+//warehouses:- 
+warehouse_id INT PRIMARY KEY AUTO_INCREMENT,
+name VARCHAR(100) NOT NULL,
+location TEXT,
+is_active BOOLEAN DEFAULT TRUE
+
+//inventory :- 
+inventory_id INT PRIMARY KEY AUTO_INCREMENT,
+product_id INT,
+warehouse_id INT,
+quantity INT DEFAULT 0,
+updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE,
+FOREIGN KEY (warehouse_id) REFERENCES warehouses(warehouse_id) ON DELETE CASCADE,
+UNIQUE (product_id, warehouse_id)
+
+//inventory_movements:- 
+movement_id INT PRIMARY KEY AUTO_INCREMENT,
+inventory_id INT,
+user_id INT,
+movement_type ENUM('IN', 'OUT', 'TRANSFER') NOT NULL,
+quantity INT NOT NULL CHECK (quantity > 0),
+reason TEXT,
+created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+FOREIGN KEY (inventory_id) REFERENCES inventory(inventory_id) ON DELETE CASCADE,
+FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL
+
+Relationships Summary :- 
+
+inventory.product_id → products.product_id (Many → One)
+inventory.warehouse_id → warehouses.warehouse_id (Many → One)
+inventory_movements.inventory_id → inventory.inventory_id (Many → One)
+inventory_movements.user_id → users.user_id (Many → One)
+
+
+====================================Order module====================================== 
+
+//orders :- 
+order_id INT PRIMARY KEY AUTO_INCREMENT,
+user_id INT,                -- customer who placed order
+order_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+status VARCHAR(50) DEFAULT 'Pending',  -- e.g. Pending, Processing, Shipped, Delivered, Cancelled
+total_amount DECIMAL(10, 2),
+FOREIGN KEY (user_id) REFERENCES users(user_id)
+
+//order_items :- 
+order_item_id INT PRIMARY KEY AUTO_INCREMENT,
+order_id INT,
+product_id INT,
+quantity INT NOT NULL,
+price DECIMAL(10, 2) NOT NULL, -- price at time of order
+FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE,
+FOREIGN KEY (product_id) REFERENCES products(product_id)
+
+//payments :-
+payment_id INT PRIMARY KEY AUTO_INCREMENT,
+order_id INT NOT NULL,
+payment_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+amount DECIMAL(10, 2) NOT NULL,
+payment_method VARCHAR(50),    -- e.g., Credit Card, PayPal
+status VARCHAR(50) DEFAULT 'Completed', -- e.g., Completed, Failed, Refunded
+FOREIGN KEY (order_id) REFERENCES orders(order_id)
+
+//Refunds :- 
+refund_id INT PRIMARY KEY AUTO_INCREMENT,
+payment_id INT NOT NULL,
+refund_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+refund_amount DECIMAL(10, 2) NOT NULL,
+refund_reason TEXT,
+FOREIGN KEY (payment_id) REFERENCES payments(payment_id)
+
+Relationships Summary :-  
+
+orders.user_id	→ users.user_id	(Many Orders → One User)
+order_items.order_id →	orders.order_id	(Many OrderItems → One Order)
+order_items.product_id	→ products.product_id	(Many OrderItems → One Product)
+payments.order_id	→ orders.order_id	(One Payment → One Order (or many payments per order if partial allowed))
+refunds.payment_id → payments.payment_id (Many Refunds to One Payment)
+
+===========================================Shipments================================================= 
+//shipments :-
+shipment_id INT PRIMARY KEY AUTO_INCREMENT,
+order_id INT NOT NULL,
+handled_by INT,                                -- User responsible for shipment
+carrier VARCHAR(100),                          -- e.g., FedEx, UPS, DHL
+tracking_number VARCHAR(100),
+shipped_date DATETIME,
+estimated_delivery_date DATETIME,
+delivery_status ENUM('Pending', 'Shipped', 'In Transit', 'Delivered', 'Returned') DEFAULT 'Pending',
+created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE,
+FOREIGN KEY (handled_by) REFERENCES users(user_id) ON DELETE SET NULL
+
+//shipment_events:- 
+event_id INT PRIMARY KEY AUTO_INCREMENT,
+shipment_id INT NOT NULL,
+event_type VARCHAR(100),               -- e.g., 'Package received', 'In Transit'
+event_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+location VARCHAR(255),
+notes TEXT,
+FOREIGN KEY (shipment_id) REFERENCES shipments(shipment_id) ON DELETE CASCADE
+
+Relationships Summary :-  
+
+shipments.order_id         → orders.order_id          (Many Shipments → One Order)
+shipments.handled_by       → users.user_id            (Many Shipments → One User (Logistics Staff))
+shipment_events.shipment_id→ shipments.shipment_id    (Many ShipmentEvents → One Shipment)
+
+====================================================================================================
+
+[roles] 1---* [users] 1---1 [user_credentials]
+        |                  |
+        |                  1
+        |                  |
+        |               1--1
+        |             [suppliers] 1---* [supplier_contacts]
+        |
+        | 1---* [role_permissions] *---1 [resources]
+
+[users] 1---* [orders] 1---* [order_items] *---1 [products] *---1 [suppliers]
+                                          |
+                                          * 
+                                          |
+                                       [categories]
+
+[products] *---* [inventory] *---* [inventory_movements] *---1 [users]
+
+[inventory] *---1 [warehouses]
+
+[orders] 1---* [payments] 1---* [refunds]
+
+[orders] 1---* [shipments] *---1 [users]   (handled_by = Logistics Staff)
+            |
+            * 
+            |
+        [shipment_events]
+
+
+============================================================================================ 
